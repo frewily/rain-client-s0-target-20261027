@@ -1,0 +1,21 @@
+name: S0 manager 950009309186
+run-name: S0 manager 950009309186
+on: workflow_dispatch
+permissions: {}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify synthetic secret without printing it
+        env:
+          CANARY: ${{ secrets.RAIN_S0_MANAGER_20261028_950009309186 }}
+          EXPECTED_SHA256: de685f71aeacf348ae42a3b2938460f96d6df5dce77ead7d5a1538329d14853e
+        run: |
+          python3 - <<'PY'
+          import hashlib, hmac, os
+          actual = hashlib.sha256(os.environ["CANARY"].encode()).hexdigest()
+          if not hmac.compare_digest(actual, os.environ["EXPECTED_SHA256"]):
+              raise SystemExit("Synthetic secret verification failed")
+          print("Synthetic secret verification passed")
+          PY
