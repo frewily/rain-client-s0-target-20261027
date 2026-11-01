@@ -1,0 +1,29 @@
+name: Rain client dev 63c616ab052b93e9
+run-name: Rain client dev 63c616ab052b93e9
+on: workflow_dispatch
+permissions: {}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Verify synthetic Cloudflare environment
+        env:
+          HEALTH_URL: "https://rain-client-dev-63c616ab052b93e9.2994508531.workers.dev/health"
+          EXPECTED_INSTANCE: "63c616ab052b93e9"
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          request = urllib.request.Request(
+              os.environ['HEALTH_URL'],
+              headers={'User-Agent': 'RainClient-Deployment-Probe/1.0'},
+          )
+          with urllib.request.urlopen(request, timeout=20) as reply:
+              raw = reply.read(4097)
+          if len(raw) > 4096:
+              raise SystemExit('Unexpected response size')
+          data = json.loads(raw)
+          if data.get('ok') is not True or data.get('kind') != 'rain-client-synthetic-v1' or data.get('instance') != os.environ['EXPECTED_INSTANCE']:
+              raise SystemExit('Synthetic environment verification failed')
+          print('Rain client synthetic environment verified')
+          PY
